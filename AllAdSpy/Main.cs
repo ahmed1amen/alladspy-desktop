@@ -1,5 +1,6 @@
 ﻿using AllAdSpy.Classes;
 using AllAdSpy.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -19,13 +20,19 @@ namespace AllAdSpy
             InitializeComponent();
 
         }
-
-
-        private void Main_Load(object sender, EventArgs e)
+        void LoadAccountToGridView()
         {
             var db = new ALLADSpyContext();
             List<Account> accounts = db.Accounts.ToList();
- 
+
+            dataGridView1.DataSource = accounts;
+
+            dataGridView1.Columns["ID"].ReadOnly = true;
+        }
+
+        private void Main_Load(object sender, EventArgs e)
+        {
+            LoadAccountToGridView();
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -38,21 +45,7 @@ namespace AllAdSpy
 
         private void button2_Click(object sender, EventArgs e)
         {
-
-            DataTable dt = new DataTable();
-            dt.Columns.Add("Name");
-            dt.Columns.Add("Marks");
-            DataRow _ravi = dt.NewRow();
-            _ravi["Name"] = "ravi";
-            _ravi["Marks"] = "500";
-            dt.Rows.Add(_ravi);
-
-            BindingSource bindingSource1 = new BindingSource();
-            bindingSource1.DataSource = dt;
-            dataGridView1.DataSource = bindingSource1;
-
-            dataGridView1.AutoSizeRowsMode =
-                 DataGridViewAutoSizeRowsMode.DisplayedCellsExceptHeaders;
+ 
             //is_sponsored.
             ////*[@id='MNewsFeed']/section/article[contains(node(),'Sponsored')]//div/span/p   //Get AD Title
 
@@ -70,6 +63,36 @@ namespace AllAdSpy
         private void button3_Click(object sender, EventArgs e)
         {
 
+
+        }
+
+        private void dataGridView1_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+
+            using (var db = new ALLADSpyContext())
+            {
+                var result = db.Accounts.SingleOrDefault(b => b.ID == dataGridView1.Rows[e.RowIndex].Cells[0].Value.ToString());
+                if (result != null)
+                {
+
+                    result.Email= dataGridView1.Rows[e.RowIndex].Cells[1].Value.ToString();
+                    result.Password= dataGridView1.Rows[e.RowIndex].Cells[2].Value.ToString();
+                    result.UserName= dataGridView1.Rows[e.RowIndex].Cells[3].Value.ToString();
+                    result.Proxy = dataGridView1.Rows[e.RowIndex].Cells[4].Value.ToString();
+                    try
+                    {
+                        db.SaveChanges();
+                        LoadAccountToGridView();
+                    }
+                    catch(DbUpdateException ex)
+                    {
+                        MessageBox.Show("Make Sure There's no Duplicated Username Or Email !","error",MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        LoadAccountToGridView();
+                    }
+    
+                }
+
+            }
 
         }
     }
